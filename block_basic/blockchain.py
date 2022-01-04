@@ -1,4 +1,4 @@
-blockchain = [1]
+blockchain = [[1]]
 
 
 def add_value(transaction_amount):
