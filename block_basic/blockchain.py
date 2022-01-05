@@ -15,7 +15,8 @@ def get_user_choice():
 
 
 def get_last_blockchain_value():
-    if blockchain[0]:
+    # if blockchain[0]:
+    if len(blockchain):
         return blockchain[-1]
     return
 
@@ -57,3 +58,14 @@ while True:
         continue
 
 print("Done!")
+
+# Notes
+# Remember the and/or keywords, work pretty much same as JS
+age = 30
+name = "Michael"
+
+if age < 40 and age > 20 or age == 18:
+    print("Yes")
+
+if name == "Michael" and (age > 20 or age < 40):  # Grouping parenthesis
+    print("Super")
