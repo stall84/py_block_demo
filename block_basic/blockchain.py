@@ -15,7 +15,9 @@ def get_user_choice():
 
 
 def get_last_blockchain_value():
-    return blockchain[-1]
+    if blockchain[0]:
+        return blockchain[-1]
+    return
 
 
 def print_blockchain_data():
