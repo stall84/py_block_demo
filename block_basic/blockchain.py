@@ -34,10 +34,16 @@ def add_value(transaction_amount, last_transaction):
     blockchain.append([last_transaction, transaction_amount])
 
 
+def verify_chain():
+    for block in blockchain:
+        return  # placeholder
+
+
 while True:
     print("Please choose: ")
     print("1: Add a new transaction amount ")
     print("2: Output the blockchain blocks")
+    print("h: Manipulate the cain")
     print("q: Quit")
     user_choice = get_user_choice()
     if user_choice == "1":
@@ -48,8 +54,9 @@ while True:
         print_blockchain_data()
         continue
     elif user_choice == "h":
-        print("H H >>>")
-        break
+        if len(blockchain):
+            blockchain[0] = [2]
+        continue
     elif user_choice == "q":
         break
     else:
