@@ -35,8 +35,20 @@ def add_value(transaction_amount, last_transaction):
 
 
 def verify_chain():
+    block_index = 0
+    is_valid = True
     for block in blockchain:
-        return  # placeholder
+        if block_index == 0:
+            block_index += 1
+            continue
+        elif block[0] == blockchain[block_index - 1]:
+            is_valid = True
+        else:
+            is_valid = False
+            break
+        block_index += 1
+    return is_valid
+    # return False
 
 
 while True:
@@ -49,29 +61,20 @@ while True:
     if user_choice == "1":
         tx_amount = get_transaction_value()
         add_value(tx_amount, get_last_blockchain_value())
-        continue
     elif user_choice == "2":
         print_blockchain_data()
-        continue
     elif user_choice == "h":
         if len(blockchain):
             blockchain[0] = [2]
-        continue
     elif user_choice == "q":
         break
     else:
         print("Input was invalid, please pick a value from the list!")
-        continue
+    if not verify_chain():
+        print("Invalid Blockchain!")
+        break
 
 print("Done!")
 
 # Notes
 # Remember the and/or keywords, work pretty much same as JS
-age = 30
-name = "Michael"
-
-if age < 40 and age > 20 or age == 18:
-    print("Yes")
-
-if name == "Michael" and (age > 20 or age < 40):  # Grouping parenthesis
-    print("Super")
