@@ -12,4 +12,12 @@ set_list = {
     "honey",
 }  # mutable, un-ordered (order not guaranteed). Written with curly brackets. NO duplicates allowed
 
-ma_tuple = ("Milk", "Honey")  # Imutable, ordered, duplicates OK,
+ma_tuple = (
+    "Milk",
+    "Honey",
+)  # Imutable, ordered, duplicates OK, usually used for grouping
+
+ma_dictionary = {
+    "name": "Milk",
+    "n": 2,
+}  # similar to JS objects. These are maps. Unordered, Mutable, No duplicate Keys,
