@@ -1,4 +1,5 @@
 blockchain = []
+open_transactions = []
 counter = 0
 
 
@@ -24,7 +25,7 @@ def print_blockchain_data():
     print(f"BlockChain Iteration {counter}: ", blockchain)
 
 
-def add_value(transaction_amount, last_transaction):
+def add_transaction(transaction_amount, last_transaction):
     global counter
     counter += 1
     if (
@@ -62,7 +63,7 @@ while waiting_for_input:
     user_choice = get_user_choice()
     if user_choice == "1":
         tx_amount = get_transaction_value()
-        add_value(tx_amount, get_last_blockchain_value())
+        add_transaction(tx_amount, get_last_blockchain_value())
     elif user_choice == "2":
         print_blockchain_data()
     elif user_choice == "h":
@@ -78,5 +79,4 @@ while waiting_for_input:
 
 print("Done!")
 
-# Notes
-# Remember the and/or keywords, work pretty much same as JS
+
