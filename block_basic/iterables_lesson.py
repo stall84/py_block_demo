@@ -20,4 +20,4 @@ ma_tuple = (
 ma_dictionary = {
     "name": "Milk",
     "n": 2,
-}  # similar to JS objects. These are maps. Unordered, Mutable, No duplicate Keys,
+}  # similar to JS objects. These are maps. Unordered, Mutable, No duplicate Keys, and the key must be a string.

@@ -1,11 +1,16 @@
 blockchain = []
 open_transactions = []
+# Owner of this instance of the blockchain. Will be a hash in production
+owner = "Michael"
 counter = 0
 
 
 def get_transaction_value():
-    user_input = float(input("Please enter a value:  "))
-    return user_input if user_input else None
+    """ Returns the input of the user ( a new transaction amount ) as a float """
+    # Get user input, transform it from a string to a float and store it
+    tx_recipient = input("Enter the recipient of the transaction: ")
+    tx_amount = float(input("Enter your transaction amount: "))
+    return (tx_recipient, tx_amount)    # Return a Tuple
 
 
 def get_user_choice():
@@ -25,14 +30,22 @@ def print_blockchain_data():
     print(f"BlockChain Iteration {counter}: ", blockchain)
 
 
-def add_transaction(transaction_amount, last_transaction):
-    global counter
-    counter += 1
-    if (
-        last_transaction == None
-    ):  # Handle initial case where the blockchain will be empty (no -1 to access). For now we'll start every blockchain with [1]
-        last_transaction = [1]
-    blockchain.append([last_transaction, transaction_amount])
+def add_transaction(sender, recipient, amount=1.0):
+    """
+
+Arguments:
+        :sender: The sender of the coins,
+        :recipient: The recipient of the coins
+        :amount: The amount of coins sent with transaction, default = 1
+
+    """
+
+    transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
+    open_transactions.append(transaction)
+
+
+def mine_block():
+    pass
 
 
 def verify_chain():
@@ -62,7 +75,7 @@ while waiting_for_input:
     print("q: Quit")
     user_choice = get_user_choice()
     if user_choice == "1":
-        tx_amount = get_transaction_value()
+        tx_data = get_transaction_value()
         add_transaction(tx_amount, get_last_blockchain_value())
     elif user_choice == "2":
         print_blockchain_data()
@@ -78,5 +91,3 @@ while waiting_for_input:
         break
 
 print("Done!")
-
-
