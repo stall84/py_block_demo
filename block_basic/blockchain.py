@@ -1,8 +1,48 @@
+# Initiating our (empty) blockchain List
 blockchain = []
 open_transactions = []
 # Owner of this instance of the blockchain. Will be a hash in production
 owner = "Michael"
 counter = 0
+
+
+def get_user_choice():
+    # Prompts user for their choice and returns it
+    user_input = input("Your choice : ")
+    return user_input if user_input else None
+
+
+def get_last_blockchain_value():
+    if len(blockchain) < 1:
+        return None
+    # Using negative index to return the last-in element
+    return blockchain[-1]
+
+
+def print_blockchain_data():
+    # Output all blocks of the blockchain to the console
+    for block in blockchain:
+        print("Block : ", block)
+    else:
+        print('_' * 20)
+    # print(f"BlockChain Iteration {counter}: ", blockchain)    # Here an example of template-literal use in python (note the 'f' preceding quotes)
+
+
+def add_transaction(recipient, sender=owner, amount=1.0):
+    """
+Arguments:
+        :recipient: The recipient of the coins (required)
+        :sender: The sender of the coins, placed after recipient because of the optional deault
+                 (optional args must go after required ones) 
+        :amount: The amount of coins sent with transaction, (optional default = 1)
+    """
+    # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
+    transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
+    open_transactions.append(transaction)
+
+
+def mine_block():
+    pass
 
 
 def get_transaction_value():
@@ -13,54 +53,18 @@ def get_transaction_value():
     return (tx_recipient, tx_amount)    # Return a Tuple
 
 
-def get_user_choice():
-    user_input = input("Input : ")
-    return user_input if user_input else None
-
-
-def get_last_blockchain_value():
-    if len(blockchain) < 1:
-        return None
-    return blockchain[-1]
-
-
-def print_blockchain_data():
-    for block in blockchain:
-        print("Block : ", block)
-    print(f"BlockChain Iteration {counter}: ", blockchain)
-
-
-def add_transaction(sender, recipient, amount=1.0):
-    """
-
-Arguments:
-        :sender: The sender of the coins,
-        :recipient: The recipient of the coins
-        :amount: The amount of coins sent with transaction, default = 1
-
-    """
-
-    transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
-    open_transactions.append(transaction)
-
-
-def mine_block():
-    pass
-
-
 def verify_chain():
-    block_index = 0
+    # block_index = 0
     is_valid = True
-    for block in blockchain:
+    for block_index in range(len(blockchain)):
         if block_index == 0:
-            block_index += 1
+
             continue
-        elif block[0] == blockchain[block_index - 1]:
+        elif blockchain[block_index][0] == blockchain[block_index - 1]:
             is_valid = True
         else:
             is_valid = False
             break
-        block_index += 1
     return is_valid
     # return False
 
@@ -76,7 +80,11 @@ while waiting_for_input:
     user_choice = get_user_choice()
     if user_choice == "1":
         tx_data = get_transaction_value()
-        add_transaction(tx_amount, get_last_blockchain_value())
+        # you can 'destructure' a tuple a lot like you might in javascript by let [x, y] = someTuple
+        recipient, amount = tx_data     # unpacked/destructured tuple.
+        # Our add_transaction function has 3 positional arguments. we need to specify amount so that the arg isn't applied to 2nd position
+        add_transaction(recipient, amount=amount)
+        print(open_transactions)
     elif user_choice == "2":
         print_blockchain_data()
     elif user_choice == "h":
