@@ -1,5 +1,6 @@
 # Initiating our (empty) blockchain List
-blockchain = []
+blockchain = []  # List
+genesis_block = {"previous_hash": "", "index": 0, "transactions": []}  # Dictionary
 open_transactions = []
 # Owner of this instance of the blockchain. Will be a hash in production
 owner = "Michael"
@@ -24,33 +25,42 @@ def print_blockchain_data():
     for block in blockchain:
         print("Block : ", block)
     else:
-        print('_' * 20)
+        print("_" * 20)
     # print(f"BlockChain Iteration {counter}: ", blockchain)    # Here an example of template-literal use in python (note the 'f' preceding quotes)
 
 
 def add_transaction(recipient, sender=owner, amount=1.0):
     """
-Arguments:
-        :recipient: The recipient of the coins (required)
-        :sender: The sender of the coins, placed after recipient because of the optional deault
-                 (optional args must go after required ones) 
-        :amount: The amount of coins sent with transaction, (optional default = 1)
+    Arguments:
+            :recipient: The recipient of the coins (required)
+            :sender: The sender of the coins, placed after recipient because of the optional deault
+                     (optional args must go after required ones)
+            :amount: The amount of coins sent with transaction, (optional default = 1)
     """
     # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
-    transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
+    transaction = {"sender": sender, "recipient": recipient, "amount": amount}
     open_transactions.append(transaction)
 
 
 def mine_block():
-    pass
+    last_block = blockchain[
+        -1
+    ]  ## You can use negative element notation to access elements from end (right side)
+    block = {
+        "previous_hash": "XYZ",
+        "index": len(blockchain),
+        "transactions": open_transactions,
+    }
+    blockchain.append(block)
+    # We still need to add validation in this method
 
 
 def get_transaction_value():
-    """ Returns the input of the user ( a new transaction amount ) as a float """
+    """Returns the input of the user ( a new transaction amount ) as a float"""
     # Get user input, transform it from a string to a float and store it
     tx_recipient = input("Enter the recipient of the transaction: ")
     tx_amount = float(input("Enter your transaction amount: "))
-    return (tx_recipient, tx_amount)    # Return a Tuple
+    return (tx_recipient, tx_amount)  # Return a Tuple
 
 
 def verify_chain():
@@ -81,7 +91,7 @@ while waiting_for_input:
     if user_choice == "1":
         tx_data = get_transaction_value()
         # you can 'destructure' a tuple a lot like you might in javascript by let [x, y] = someTuple
-        recipient, amount = tx_data     # unpacked/destructured tuple.
+        recipient, amount = tx_data  # unpacked/destructured tuple.
         # Our add_transaction function has 3 positional arguments. we need to specify amount so that the arg isn't applied to 2nd position
         add_transaction(recipient, amount=amount)
         print(open_transactions)
