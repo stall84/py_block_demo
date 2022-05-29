@@ -103,7 +103,7 @@ def verify_chain():
             continue
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
             return False
-        return True
+    return True
     # # block_index = 0
     # is_valid = True
     # for block_index in range(len(blockchain)):
@@ -127,7 +127,7 @@ while waiting_for_input:
     print("2: Mine a new block")
     print("3: Output the blockchain blocks")
     print("h: Manipulate the cain")
-    print("pl: Print the current open transactions (not mined)")
+    print("o: Print the current open transactions (not mined)")
     print("q: Quit")
     user_choice = get_user_choice()
     if user_choice == "1":
@@ -142,17 +142,22 @@ while waiting_for_input:
     elif user_choice == "3":
         print_blockchain_data()
     elif user_choice == "h":
-        # if len(blockchain):
-        #     blockchain[0] = [2]
-        pass
-    elif user_choice == "pl":
+        # Make sure that you don't try to "hack" the blockchain if it's empty
+        if len(blockchain) >= 1:
+            blockchain[0] = {
+                'previous_hash': '',
+                'index': 0,
+                'transactions': [{'sender': 'Chris', 'recipient': 'Max', 'amount': 100.0}]
+            }
+    elif user_choice == "o":
         print_open_transactions()
     elif user_choice == "q":
         waiting_for_input = False
     else:
         print("Input was invalid, please pick a value from the list!")
-    # if not verify_chain():
-    #     print("Invalid Blockchain!")
-    #     break
+    if not verify_chain():
+        print_blockchain_data()         # print the apparently corrupted blockchain to user
+        print("Invalid Blockchain!")
+        break                           # Immediately exit
 
 print("Done!")
