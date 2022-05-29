@@ -60,6 +60,14 @@ def hash_block(last_block):
     return '-'.join([str(last_block[key]) for key in last_block])
 
 
+def get_balances(participant):
+    # We're going to use a nested list comprehension here.. I'm not a huge fan of these so far.. but the idea is
+    # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
+    tx_sender = [[tx['amount'] for tx in block['transactions']
+                  if tx['sender'] == participant] for block in blockchain]
+    return tx_sender
+
+
 def mine_block():
     try:
         # You can use negative element notation to access elements from end (right side)
@@ -82,7 +90,8 @@ def mine_block():
         blockchain.append(block)
         # We still need to add validation in this method
         # Clear open transactions after write ?
-        open_transactions.clear()
+        # open_transactions.clear()
+        return True
     except:
         print('ERROR MINING BLOCK - ABORTED')
 
@@ -129,7 +138,7 @@ while waiting_for_input:
     print('1: Add a new transaction amount ')
     print('2: Mine a new block')
     print('3: Output the blockchain blocks')
-    print('h: Manipulate the cain')
+    print('h: Manipulate the chain')
     print('o: Print the current open transactions (not mined)')
     print('p: Print all participants')
     print('q: Quit')
@@ -142,7 +151,8 @@ while waiting_for_input:
         add_transaction(recipient, amount=amount)
         print(open_transactions)
     elif user_choice == '2':
-        mine_block()
+        if mine_block():
+            open_transactions = []  # If minining successfull - clear the open transactions list
     elif user_choice == '3':
         print_blockchain_data()
     elif user_choice == 'h':
@@ -163,6 +173,7 @@ while waiting_for_input:
         waiting_for_input = False
     else:
         print('Input was invalid, please pick a value from the list!')
+    print(get_balances('Michael'))  # Print balances after any transaction
     if not verify_chain():
         print_blockchain_data()         # print the apparently corrupted blockchain to user
         print('Invalid Blockchain!')
