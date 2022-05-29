@@ -1,6 +1,6 @@
 # 3 types of iterables in Python
 
-# List (Array)
+# List (This is a dynamic array .. borrows from Array Lists and array.array)
 iterable = [
     "milk",
     "honey",
