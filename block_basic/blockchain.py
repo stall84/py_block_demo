@@ -1,8 +1,8 @@
-# Initiating our (empty) blockchain List
-
-genesis_block = {'previous_hash': '',
+# Global constants and variables
+MINING_REWARD = 10
+GENESIS_BLOCK = {'previous_hash': '',
                  'index': 0, 'transactions': []}  # Dictionary
-blockchain = [genesis_block]  # List structure for our main blockchain datatype
+blockchain = [GENESIS_BLOCK]  # List structure for our main blockchain datatype
 open_transactions = []
 # Owner of this instance of the blockchain. Will be a hash in production
 owner = 'Michael'
@@ -65,7 +65,21 @@ def get_balances(participant):
     # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
     tx_sender = [[tx['amount'] for tx in block['transactions']
                   if tx['sender'] == participant] for block in blockchain]
-    return tx_sender
+    amount_sent = 0
+    for tx in tx_sender:
+        if len(tx) > 0:
+            # Remember tx_sender is a list of lists.. so access the 0th element for the value itself
+            amount_sent += tx[0]
+    tx_recipient = [[tx['amount'] for tx in block['transactions']
+                     if tx['recipient'] == participant] for block in blockchain]
+    amount_received = 0
+    for tx in tx_recipient:
+        if len(tx) > 0:
+            # Remember tx_recipient is a list of lists.. so access the 0th element for the value itself
+            amount_received += tx[0]
+    # We could return a tuple here i.e. (amount_sent, amount_received). But also could go ahead and
+    # Do a balance calculation to return the remaining balance (positive or negative) to the participant
+    return amount_received - amount_sent
 
 
 def mine_block():
@@ -74,14 +88,14 @@ def mine_block():
         last_block = blockchain[-1]
         # List Comprehension .. Kind of like spreading and templating/formatting in a the the same time
         hashed_block = hash_block(last_block)
-        # lines 61-67 below were the original straightforward for-loop approach to iterating a List .. There is however List Comprehension which we use above instead
-        # hashed_block = ''
-        # Just like js you can (except arguably much more straightforward here in python) iterate over the keys
-        # In a dictionary object. Here we iterate over the previous block's keys and values (i.e. 'previous_hash':'XYX', 'index': 3, 'transactions': [...] )
-        # Then we stringify the previous block (hashed_block) to store it.
-        # for keys in last_block:
-        #     value = last_block[keys]
-        #     hashed_block += str(value)
+        # Carry out the reward assignment to the miner of record (owner)
+        reward_transaction = {
+            'sender': 'MINING',
+            'recipient': owner,
+            'amount': MINING_REWARD
+        }
+        # Apend the miner's payout before combining and applying them to blockchain
+        open_transactions.append(reward_transaction)
         block = {
             'previous_hash': hashed_block,
             'index': len(blockchain),
@@ -153,6 +167,7 @@ while waiting_for_input:
     elif user_choice == '2':
         if mine_block():
             open_transactions = []  # If minining successfull - clear the open transactions list
+
     elif user_choice == '3':
         print_blockchain_data()
     elif user_choice == 'h':
