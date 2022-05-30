@@ -51,20 +51,36 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     """
     # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
     transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
-    open_transactions.append(transaction)
-    participants.add(sender)
-    participants.add(recipient)
+    if verify_transaction(transaction):
+        open_transactions.append(transaction)
+        participants.add(sender)
+        participants.add(recipient)
+        # Lets return a boolean (something) so that we can handle/communicate errors
+        return True
+    return False
+
+
+def verify_transaction(transaction):
+    sender_balance = get_balance(transaction['sender'])
+    return sender_balance >= transaction['amount']
+
+
+def verify_transactions():
+    return all([verify_transaction(tx) for tx in open_transactions])
 
 
 def hash_block(last_block):
     return '-'.join([str(last_block[key]) for key in last_block])
 
 
-def get_balances(participant):
+def get_balance(participant):
     # We're going to use a nested list comprehension here.. I'm not a huge fan of these so far.. but the idea is
     # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
     tx_sender = [[tx['amount'] for tx in block['transactions']
                   if tx['sender'] == participant] for block in blockchain]
+    open_tx_sender = [tx['amount']
+                      for tx in open_transactions if tx['sender'] == participant]
+    tx_sender.append(open_tx_sender)    # More balance verification
     amount_sent = 0
     for tx in tx_sender:
         if len(tx) > 0:
@@ -95,11 +111,14 @@ def mine_block():
             'amount': MINING_REWARD
         }
         # Apend the miner's payout before combining and applying them to blockchain
-        open_transactions.append(reward_transaction)
+        # We want to use a copy of open_transactions to limit errors at scale..
+        # To do so, use the [:] list operation to 'spread in' all of the elements (copy them)
+        copied_transactions = open_transactions[:]
+        copied_transactions.append(reward_transaction)
         block = {
             'previous_hash': hashed_block,
             'index': len(blockchain),
-            'transactions': open_transactions,
+            'transactions': copied_transactions,
         }
         blockchain.append(block)
         # We still need to add validation in this method
@@ -155,14 +174,18 @@ while waiting_for_input:
     print('h: Manipulate the chain')
     print('o: Print the current open transactions (not mined)')
     print('p: Print all participants')
+    print('v: Check validity of all transactions')
     print('q: Quit')
     user_choice = get_user_choice()
     if user_choice == '1':
         tx_data = get_transaction_value()
         # you can 'destructure' a tuple a lot like you might in javascript by let [x, y] = someTuple
         recipient, amount = tx_data  # unpacked/destructured tuple.
-        # Our add_transaction function has 3 positional arguments. we need to specify amount so that the arg isn't applied to 2nd position
-        add_transaction(recipient, amount=amount)
+        # Ourf add_transaction function has 3 positional arguments. we need to specify amount so that the arg isn't applied to 2nd position
+        if add_transaction(recipient, amount=amount):
+            print('Added Transaction!')
+        else:
+            print('Transaction Failed..')
         print(open_transactions)
     elif user_choice == '2':
         if mine_block():
@@ -184,11 +207,17 @@ while waiting_for_input:
         print('Participants: ')
         for participant in participants:
             print(participant)
+    elif user_choice == 'v':
+        if verify_transactions():
+            print('All transactions are valid')
+        else:
+            print('There are invalid transactions')
     elif user_choice == 'q':
         waiting_for_input = False
     else:
         print('Input was invalid, please pick a value from the list!')
-    print(get_balances('Michael'))  # Print balances after any transaction
+    # Review string formatting {}:6.2f} is calling for max 6 digits with 2 decimal places - Print balances after any transaction
+    print('Balance of {}: {:6.2f}'.format('Michael', get_balance('Michael')))
     if not verify_chain():
         print_blockchain_data()         # print the apparently corrupted blockchain to user
         print('Invalid Blockchain!')
