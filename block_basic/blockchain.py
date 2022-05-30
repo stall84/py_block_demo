@@ -1,4 +1,7 @@
 # Global constants and variables
+import functools
+
+
 MINING_REWARD = 10
 GENESIS_BLOCK = {'previous_hash': '',
                  'index': 0, 'transactions': []}  # Dictionary
@@ -81,18 +84,25 @@ def get_balance(participant):
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)    # More balance verification
-    amount_sent = 0
-    for tx in tx_sender:
-        if len(tx) > 0:
-            # Remember tx_sender is a list of lists.. so access the 0th element for the value itself
-            amount_sent += tx[0]
+    # Remember tx_sender is a list of lists.. so access the 0th element for the value itself in amount_sent calc below
+    # We use a ternary expression in the reduce lambda below. Slightly different arrangement than in JS
+    # where: (Value If True) if (Condition to test) else (Value If False)
+    amount_sent = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, tx_sender, 0)
+    # amount_sent = 0
+    # for tx in tx_sender:
+    #     if len(tx) > 0:
+    #         # Remember tx_sender is a list of lists.. so access the 0th element for the value itself
+    #         amount_sent += tx[0]
     tx_recipient = [[tx['amount'] for tx in block['transactions']
                      if tx['recipient'] == participant] for block in blockchain]
-    amount_received = 0
-    for tx in tx_recipient:
-        if len(tx) > 0:
-            # Remember tx_recipient is a list of lists.. so access the 0th element for the value itself
-            amount_received += tx[0]
+    amount_received = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, tx_recipient, 0)
+    # amount_received = 0
+    # for tx in tx_recipient:
+    #     if len(tx) > 0:
+    #         # Remember tx_recipient is a list of lists.. so access the 0th element for the value itself
+    #         amount_received += tx[0]
     # We could return a tuple here i.e. (amount_sent, amount_received). But also could go ahead and
     # Do a balance calculation to return the remaining balance (positive or negative) to the participant
     return amount_received - amount_sent
