@@ -1,7 +1,8 @@
-# Global constants and variables
+# Imports
 import functools
-
-
+import hashlib
+import json
+# Global constants and variables
 MINING_REWARD = 10
 GENESIS_BLOCK = {'previous_hash': '',
                  'index': 0, 'transactions': []}  # Dictionary
@@ -72,8 +73,13 @@ def verify_transactions():
     return all([verify_transaction(tx) for tx in open_transactions])
 
 
+def valid_proof(transactions, last_hash, proof):
+    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+
+
 def hash_block(last_block):
-    return '-'.join([str(last_block[key]) for key in last_block])
+    # return '-'.join([str(last_block[key]) for key in last_block])
+    return hashlib.sha256(json.dumps(last_block).encode()).hexdigest()
 
 
 def get_balance(participant):
@@ -114,6 +120,7 @@ def mine_block():
         last_block = blockchain[-1]
         # List Comprehension .. Kind of like spreading and templating/formatting in a the the same time
         hashed_block = hash_block(last_block)
+        print('hashed_block: ', hashed_block)
         # Carry out the reward assignment to the miner of record (owner)
         reward_transaction = {
             'sender': 'MINING',
