@@ -1,10 +1,14 @@
-# Global constants and variables
+# Imports
 import functools
-
-
+import hashlib
+import json
+from collections import OrderedDict
+# Global constants and variables
 MINING_REWARD = 10
 GENESIS_BLOCK = {'previous_hash': '',
-                 'index': 0, 'transactions': []}  # Dictionary
+                 'index': 0,
+                 'transactions': [],
+                 'proof': 100}  # Dictionary
 blockchain = [GENESIS_BLOCK]  # List structure for our main blockchain datatype
 open_transactions = []
 # Owner of this instance of the blockchain. Will be a hash in production
@@ -53,7 +57,9 @@ def add_transaction(recipient, sender=owner, amount=1.0):
             :amount: The amount of coins sent with transaction, (optional default = 1)
     """
     # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
-    transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
+    # transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
+    transaction = OrderedDict(
+        [('sender', sender), ('recipient', recipient), ('amount', amount)])
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         participants.add(sender)
@@ -73,7 +79,29 @@ def verify_transactions():
 
 
 def hash_block(last_block):
-    return '-'.join([str(last_block[key]) for key in last_block])
+    # return '-'.join([str(last_block[key]) for key in last_block])
+    return hashlib.sha256(json.dumps(last_block, sort_keys=True).encode()).hexdigest()
+
+
+def valid_proof(transactions, last_hash, proof):
+    # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
+    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    print('guess_hash: ', guess_hash)
+    # The leading 2 0's below is merely an arbitrary condition picked to validate the hash..
+    # Essentially this is determining if the input proof does indeed lead to this hash
+    return guess_hash[0:2] == '00'  # Return True when this condition is met
+
+
+def proof_of_work():
+    last_block = blockchain[-1]
+    last_hash = hash_block(last_block)
+    proof = 0
+    # Continue working (looping) until valid_proof returns True, at which point our Proof has
+    # correctly 'solved' the proof of work 'puzzle'
+    while not valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+    return proof
 
 
 def get_balance(participant):
@@ -114,12 +142,17 @@ def mine_block():
         last_block = blockchain[-1]
         # List Comprehension .. Kind of like spreading and templating/formatting in a the the same time
         hashed_block = hash_block(last_block)
+        # Call our proof-of-work function for mining process
+        proof = proof_of_work()
         # Carry out the reward assignment to the miner of record (owner)
-        reward_transaction = {
-            'sender': 'MINING',
-            'recipient': owner,
-            'amount': MINING_REWARD
-        }
+        # reward_transaction = {
+        #     'sender': 'MINING',
+        #     'recipient': owner,
+        #     'amount': MINING_REWARD
+        # }
+        # Using the OrderedDict imported object to preclude any key-value order-mismatch
+        reward_transaction = OrderedDict(
+            [('sender', 'MINING'), ('recipient', owner), ('amount', MINING_REWARD)])
         # Apend the miner's payout before combining and applying them to blockchain
         # We want to use a copy of open_transactions to limit errors at scale..
         # To do so, use the [:] list operation to 'spread in' all of the elements (copy them)
@@ -129,6 +162,7 @@ def mine_block():
             'previous_hash': hashed_block,
             'index': len(blockchain),
             'transactions': copied_transactions,
+            'proof': proof,
         }
         blockchain.append(block)
         # We still need to add validation in this method
@@ -157,6 +191,10 @@ def verify_chain():
         if index == 0:
             continue
         if block['previous_hash'] != hash_block(blockchain[index - 1]):
+            return False
+        # Check the proof as well
+        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+            print('Proof of Work is Invalid ...')
             return False
     return True
     # # block_index = 0
