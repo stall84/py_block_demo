@@ -83,6 +83,11 @@ def hash_block(last_block):
     return hashlib.sha256(json.dumps(last_block, sort_keys=True).encode()).hexdigest()
 
 
+'''
+    Need to review the proof-validating function below and the concept/mechanism as a whole. -- 6-22
+'''
+
+
 def valid_proof(transactions, last_hash, proof):
     # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
