@@ -3,6 +3,11 @@ import functools
 import hashlib
 import json
 from collections import OrderedDict
+
+# Custom Imports
+from hash_util import hash_string_256, hash_block
+
+
 # Global constants and variables
 MINING_REWARD = 10
 GENESIS_BLOCK = {'previous_hash': '',
@@ -78,11 +83,6 @@ def verify_transactions():
     return all([verify_transaction(tx) for tx in open_transactions])
 
 
-def hash_block(last_block):
-    # return '-'.join([str(last_block[key]) for key in last_block])
-    return hashlib.sha256(json.dumps(last_block, sort_keys=True).encode()).hexdigest()
-
-
 '''
     Need to review the proof-validating function below and the concept/mechanism as a whole. -- 6-22
 '''
@@ -91,7 +91,7 @@ def hash_block(last_block):
 def valid_proof(transactions, last_hash, proof):
     # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    guess_hash = hashlib.sha256(guess).hexdigest()
+    guess_hash = hash_string_256(guess)
     print('guess_hash: ', guess_hash)
     # The leading 2 0's below is merely an arbitrary condition picked to validate the hash..
     # Essentially this is determining if the input proof does indeed lead to this hash
