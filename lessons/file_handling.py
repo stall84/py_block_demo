@@ -42,9 +42,10 @@ print('demo_read?: ', main)
 
 # Python will open this file and store it in 'f' since you provided f to the 'as' portion of the block
 # You can remove the close() statement from the bottom as this will be closed by python
-with open('new_demo.txt', mode='r') as f:
-    line = f.readline()
+with open('new_demo.txt', mode='r') as curr_file:
+    line = curr_file.readline()
+    print('1st f.readline() line: ', line)
     while line:
         print(line)
-        line = f.readline()
-    print('Done!')
+        line = curr_file.readline()
+    print('\nDone!')
