@@ -22,6 +22,38 @@ participants = {'Michael'}  # set literal
 counter = 0
 
 
+# Next two functions save and load_data work with the local file system to store and read-in
+# copies of our blockchain
+def save_data():
+    # We'll always want a fresh/new snapshot of the blocks. so use 'w' and not 'a' as mode
+    # Utilize with-as block to have python manage memory for file operations
+    with open('blockchain.txt', mode='w') as curr_file:         # Lazy var naming. 'f' for 'file'
+        # We need to standardize the serialization/deserialization of our blockchain/open_transactions write/saves
+        # So we will use the JSON library for that
+        curr_file.write(json.dumps(blockchain))
+        curr_file.write('\n')
+        curr_file.write(json.dumps(open_transactions))
+
+
+def load_data():
+    with open('blockchain.txt', mode='r') as curr_file:
+        # To get all lines read-in in a list format. use readlines()
+        file_content = curr_file.readlines()
+        # To access our blockchain and open_transactions global variables
+        # from inside this function scope use 'global' keyword
+        global blockchain
+        global open_transactions
+        # Our output list has the blockchain on the first line. Open transactions on 2nd
+        # We select the range everything (:) up to and excluding the last character (which is the newline)
+        blockchain = json.loads(file_content[0][:-1])
+        # No newline at end of open_transactions so no range need selected
+        open_transactions = json.loads(file_content[1])
+
+
+# Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
+load_data()
+
+
 def get_user_choice():
     # Prompts user for their choice and returns it
     user_input = input('Your choice : ')
@@ -69,6 +101,7 @@ def add_transaction(recipient, sender=owner, amount=1.0):
         open_transactions.append(transaction)
         participants.add(sender)
         participants.add(recipient)
+        save_data()
         # Lets return a boolean (something) so that we can handle/communicate errors
         return True
     return False
@@ -91,6 +124,7 @@ def verify_transactions():
 def valid_proof(transactions, last_hash, proof):
     # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
     guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    print('DEBUG - guess: ', guess)
     guess_hash = hash_string_256(guess)
     print('guess_hash: ', guess_hash)
     # The leading 2 0's below is merely an arbitrary condition picked to validate the hash..
@@ -170,6 +204,7 @@ def mine_block():
             'proof': proof,
         }
         blockchain.append(block)
+
         # We still need to add validation in this method
         # Clear open transactions after write ?
         # open_transactions.clear()
@@ -243,6 +278,7 @@ while waiting_for_input:
     elif user_choice == '2':
         if mine_block():
             open_transactions = []  # If minining successfull - clear the open transactions list
+            save_data()
 
     elif user_choice == '3':
         print_blockchain_data()
