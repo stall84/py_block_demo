@@ -3,6 +3,7 @@ import functools
 import hashlib
 import json
 from collections import OrderedDict
+import pickle       # pickle package / 'pickling' can convert python data to binary, store it as such, and serialiaze/deserialize on that. Somewhat in contrast with json
 
 # Custom Imports
 from hash_util import hash_string_256, hash_block
@@ -46,8 +47,28 @@ def load_data():
         # Our output list has the blockchain on the first line. Open transactions on 2nd
         # We select the range everything (:) up to and excluding the last character (which is the newline)
         blockchain = json.loads(file_content[0][:-1])
+        updated_blockchain = []
+        # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
+        for block in blockchain:
+            updated_block = {
+                'previous_hash': block['previous_hash'],
+                'index': block['index'],
+                'proof': block['proof'],
+                'transactions': [OrderedDict(
+                    [('sender', tx['sender']), ('recipient',
+                                                tx['recipient']), ('amount', tx['amount'])]
+                ) for tx in block['transactions']]
+            }
+            updated_blockchain.append(updated_block)
+        blockchain = updated_blockchain
         # No newline at end of open_transactions so no range need selected
         open_transactions = json.loads(file_content[1])
+        updated_transactions = []
+        for tx in open_transactions:
+            updated_transaction = OrderedDict(
+                [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
+            updated_transactions.append(updated_transaction)
+        open_transactions = updated_transactions
 
 
 # Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
