@@ -28,47 +28,67 @@ counter = 0
 def save_data():
     # We'll always want a fresh/new snapshot of the blocks. so use 'w' and not 'a' as mode
     # Utilize with-as block to have python manage memory for file operations
-    with open('blockchain.txt', mode='w') as curr_file:         # Lazy var naming. 'f' for 'file'
+    # for write mode.. default is 'wt' or just 'w' which is TEXT.. When implementing pickle-binary we change to 'wb' WRITE-BINARY (also change file extension to .p for pickle)
+    with open('blockchain.p', mode='wb') as curr_file:         # Lazy var naming. 'f' for 'file'
         # We need to standardize the serialization/deserialization of our blockchain/open_transactions write/saves
         # So we will use the JSON library for that
-        curr_file.write(json.dumps(blockchain))
-        curr_file.write('\n')
-        curr_file.write(json.dumps(open_transactions))
+        # curr_file.write(json.dumps(blockchain))
+        # curr_file.write('\n')
+        # curr_file.write(json.dumps(open_transactions))
+
+        # Alternate pickle implementation
+        # When pickling binary we can't use a newline text character.. therefore create a new dict object to be stored as binary in pickling
+        save_data = {
+            'chain': blockchain,
+            'ot': open_transactions
+        }
+        curr_file.write(pickle.dumps(save_data))
 
 
 def load_data():
-    with open('blockchain.txt', mode='r') as curr_file:
+    # Using an alternate pickle data serialization process.. change mode from 'r' for original text/json implementation to 'rb' for read-binary for binary/pickle
+    with open('blockchain.p', mode='rb') as curr_file:
         # To get all lines read-in in a list format. use readlines()
-        file_content = curr_file.readlines()
+
+        # file_content = curr_file.readlines()
+        file_content = pickle.loads(curr_file.read())
+        print(file_content)
         # To access our blockchain and open_transactions global variables
         # from inside this function scope use 'global' keyword
         global blockchain
         global open_transactions
         # Our output list has the blockchain on the first line. Open transactions on 2nd
         # We select the range everything (:) up to and excluding the last character (which is the newline)
-        blockchain = json.loads(file_content[0][:-1])
-        updated_blockchain = []
-        # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
-        for block in blockchain:
-            updated_block = {
-                'previous_hash': block['previous_hash'],
-                'index': block['index'],
-                'proof': block['proof'],
-                'transactions': [OrderedDict(
-                    [('sender', tx['sender']), ('recipient',
-                                                tx['recipient']), ('amount', tx['amount'])]
-                ) for tx in block['transactions']]
-            }
-            updated_blockchain.append(updated_block)
-        blockchain = updated_blockchain
-        # No newline at end of open_transactions so no range need selected
-        open_transactions = json.loads(file_content[1])
-        updated_transactions = []
-        for tx in open_transactions:
-            updated_transaction = OrderedDict(
-                [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
-            updated_transactions.append(updated_transaction)
-        open_transactions = updated_transactions
+        # blockchain = json.loads(file_content[0][:-1])
+        # updated_blockchain = []
+        # # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
+        # for block in blockchain:
+        #     updated_block = {
+        #         'previous_hash': block['previous_hash'],
+        #         'index': block['index'],
+        #         'proof': block['proof'],
+        #         'transactions': [OrderedDict(
+        #             [('sender', tx['sender']), ('recipient',
+        #                                         tx['recipient']), ('amount', tx['amount'])]
+        #         ) for tx in block['transactions']]
+        #     }
+        #     updated_blockchain.append(updated_block)
+        # blockchain = updated_blockchain
+        # # No newline at end of open_transactions so no range need selected
+        # open_transactions = json.loads(file_content[1])
+        # updated_transactions = []
+        # for tx in open_transactions:
+        #     updated_transaction = OrderedDict(
+        #         [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
+        #     updated_transactions.append(updated_transaction)
+        # open_transactions = updated_transactions
+
+        # Pickling removes the need for the previous ~ 25 lines because being a binary serialization, it keeps the OrderedDict 'metadata' and we don't
+        # have to perform the complex transformation we did with the json/text serialization. However we will switch to the longer
+        # json serialization in order to manipulate the text file and check our security. Long Term pickle prob should be used
+        # So instead of lines 62-84 above, we just use:
+        blockchain = file_content['chain']
+        open_transactions = file_content['ot']
 
 
 # Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
