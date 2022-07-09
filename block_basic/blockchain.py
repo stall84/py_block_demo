@@ -11,11 +11,8 @@ from hash_util import hash_string_256, hash_block
 
 # Global constants and variables
 MINING_REWARD = 10
-GENESIS_BLOCK = {'previous_hash': '',
-                 'index': 0,
-                 'transactions': [],
-                 'proof': 100}  # Dictionary
-blockchain = [GENESIS_BLOCK]  # List structure for our main blockchain datatype
+
+blockchain = []  # List structure for our main blockchain datatype
 open_transactions = []
 # Owner of this instance of the blockchain. Will be a hash in production
 owner = 'Michael'
@@ -26,27 +23,34 @@ counter = 0
 # Next two functions save and load_data work with the local file system to store and read-in
 # copies of our blockchain
 def save_data():
-    # We'll always want a fresh/new snapshot of the blocks. so use 'w' and not 'a' as mode
-    # Utilize with-as block to have python manage memory for file operations
-    # for write mode.. default is 'wt' or just 'w' which is TEXT.. When implementing pickle-binary we change to 'wb' WRITE-BINARY (also change file extension to .p for pickle)
-    with open('blockchain.txt', mode='w') as curr_file:         # Lazy var naming. 'f' for 'file'
-        # We need to standardize the serialization/deserialization of our blockchain/open_transactions write/saves
-        # So we will use the JSON library for that
-        curr_file.write(json.dumps(blockchain))
-        curr_file.write('\n')
-        curr_file.write(json.dumps(open_transactions))
+    try:
+        # We'll always want a fresh/new snapshot of the blocks. so use 'w' and not 'a' as mode
+        # Utilize with-as block to have python manage memory for file operations
+        # for write mode.. default is 'wt' or just 'w' which is TEXT.. When implementing pickle-binary we change to 'wb' WRITE-BINARY (also change file extension to .p for pickle)
+        with open('blockchain.txt', mode='w') as curr_file:         # Lazy var naming. 'f' for 'file'
+            # We need to standardize the serialization/deserialization of our blockchain/open_transactions write/saves
+            # So we will use the JSON library for that
+            curr_file.write(json.dumps(blockchain))
+            curr_file.write('\n')
+            curr_file.write(json.dumps(open_transactions))
 
-        # Alternate pickle implementation
-        # When pickling binary we can't use a newline text character.. therefore create a new dict object to be stored as binary in pickling
-        # save_data = {
-        #     'chain': blockchain,
-        #     'ot': open_transactions
-        # }
-        # curr_file.write(pickle.dumps(save_data))
+            # Alternate pickle implementation
+            # When pickling binary we can't use a newline text character.. therefore create a new dict object to be stored as binary in pickling
+            # save_data = {
+            #     'chain': blockchain,
+            #     'ot': open_transactions
+            # }
+            # curr_file.write(pickle.dumps(save_data))
+    except IOError:
+        print('Error saving blockchain file...')
 
 
 def load_data():
     # We want to guard (error-handle) against the possibility the blockchain.txt/p file may not exist. Use a try/catch block
+    # To access our blockchain and open_transactions global variables
+    # from inside this function scope use 'global' keyword
+    global blockchain
+    global open_transactions
     try:
         # Using an alternate pickle data serialization process.. change mode from 'r' for original text/json implementation to 'rb' for read-binary for binary/pickle
         with open('blockchain.txt', mode='r') as curr_file:
@@ -56,10 +60,7 @@ def load_data():
             # pickle-implementation below
             # file_content = pickle.loads(curr_file.read())
             # print(file_content)
-            # To access our blockchain and open_transactions global variables
-            # from inside this function scope use 'global' keyword
-            global blockchain
-            global open_transactions
+
             # Our output list has the blockchain on the first line. Open transactions on 2nd
             # We select the range everything (:) up to and excluding the last character (which is the newline)
             blockchain = json.loads(file_content[0][:-1])
@@ -93,16 +94,23 @@ def load_data():
             # blockchain = file_content['chain']
             # open_transactions = file_content['ot']
     # NOTE: Important to handle each exception explicitly, as we do the IOError (after the except keyword) below
-    # NOTE: In the exception clause below we initially tried without specifiying an exception type.. this worked, but is an anti-pattern and will obfuscate errors..
-    # NOTE: Instead always follow except with the exception type to be handled.. you can string together multiple except clauses. Or alternatively can include more than 1 in parenthesis
-    # NOTE: While you can use a 'catch-all' except statement with NO specified exception.. this must be used with care because it will hide important information about errors/bugs
+    #       In the exception clause below we initially tried without specifiying an exception type.. this worked, but is an anti-pattern and will obfuscate errors..
+    #       Instead always follow except with the exception type to be handled.. you can string together multiple except clauses. Or alternatively can include more than 1 in parenthesis
+    #       While you can use a 'catch-all' except statement with NO specified exception.. this must be used with care because it will hide important information about errors/bugs
     except IOError:
         print('No blockchain save file found. Creating from genesis...')
-    except ValueError:
-        print('Incorrect file data structure attempted to be loaded...')
-    except:
-        # NOTE: VALID BUT DANGEROUS
-        print('Error in loading blockchain data... continuing...')
+        GENESIS_BLOCK = {'previous_hash': '',
+                         'index': 0,
+                         'transactions': [],
+                         'proof': 100}
+        # List structure for our main blockchain datatype
+        blockchain = [GENESIS_BLOCK]
+        open_transactions = []
+    # except ValueError:
+    #     print('Incorrect file data structure attempted to be loaded...')
+    # except:
+    #     # NOTE: VALID BUT DANGEROUS
+    #     print('Error in loading blockchain data... continuing...')
     finally:
         # Just like in javascript the finally block works exactly the same, will always be executed regardless of a successful try or an exception
         print('Cleanup..')
