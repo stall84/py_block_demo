@@ -46,50 +46,66 @@ def save_data():
 
 
 def load_data():
-    # Using an alternate pickle data serialization process.. change mode from 'r' for original text/json implementation to 'rb' for read-binary for binary/pickle
-    with open('blockchain.txt', mode='r') as curr_file:
-        # To get all lines read-in in a list format. use readlines()
-        file_content = curr_file.readlines()
+    # We want to guard (error-handle) against the possibility the blockchain.txt/p file may not exist. Use a try/catch block
+    try:
+        # Using an alternate pickle data serialization process.. change mode from 'r' for original text/json implementation to 'rb' for read-binary for binary/pickle
+        with open('blockchain.txt', mode='r') as curr_file:
+            # To get all lines read-in in a list format. use readlines()
+            file_content = curr_file.readlines()
 
-        # pickle-implementation below
-        # file_content = pickle.loads(curr_file.read())
-        # print(file_content)
-        # To access our blockchain and open_transactions global variables
-        # from inside this function scope use 'global' keyword
-        global blockchain
-        global open_transactions
-        # Our output list has the blockchain on the first line. Open transactions on 2nd
-        # We select the range everything (:) up to and excluding the last character (which is the newline)
-        blockchain = json.loads(file_content[0][:-1])
-        updated_blockchain = []
-        # # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
-        for block in blockchain:
-            updated_block = {
-                'previous_hash': block['previous_hash'],
-                'index': block['index'],
-                'proof': block['proof'],
-                'transactions': [OrderedDict(
-                    [('sender', tx['sender']), ('recipient',
-                                                tx['recipient']), ('amount', tx['amount'])]
-                ) for tx in block['transactions']]
-            }
-            updated_blockchain.append(updated_block)
-        blockchain = updated_blockchain
-        # # No newline at end of open_transactions so no range need selected
-        open_transactions = json.loads(file_content[1])
-        updated_transactions = []
-        for tx in open_transactions:
-            updated_transaction = OrderedDict(
-                [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
-            updated_transactions.append(updated_transaction)
-        open_transactions = updated_transactions
+            # pickle-implementation below
+            # file_content = pickle.loads(curr_file.read())
+            # print(file_content)
+            # To access our blockchain and open_transactions global variables
+            # from inside this function scope use 'global' keyword
+            global blockchain
+            global open_transactions
+            # Our output list has the blockchain on the first line. Open transactions on 2nd
+            # We select the range everything (:) up to and excluding the last character (which is the newline)
+            blockchain = json.loads(file_content[0][:-1])
+            updated_blockchain = []
+            # # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
+            for block in blockchain:
+                updated_block = {
+                    'previous_hash': block['previous_hash'],
+                    'index': block['index'],
+                    'proof': block['proof'],
+                    'transactions': [OrderedDict(
+                        [('sender', tx['sender']), ('recipient',
+                                                    tx['recipient']), ('amount', tx['amount'])]
+                    ) for tx in block['transactions']]
+                }
+                updated_blockchain.append(updated_block)
+            blockchain = updated_blockchain
+            # # No newline at end of open_transactions so no range need selected
+            open_transactions = json.loads(file_content[1])
+            updated_transactions = []
+            for tx in open_transactions:
+                updated_transaction = OrderedDict(
+                    [('sender', tx['sender']), ('recipient', tx['recipient']), ('amount', tx['amount'])])
+                updated_transactions.append(updated_transaction)
+            open_transactions = updated_transactions
 
-        # Pickling removes the need for the previous ~ 25 lines because being a binary serialization, it keeps the OrderedDict 'metadata' and we don't
-        # have to perform the complex transformation we did with the json/text serialization. However we will switch to the longer
-        # json serialization in order to manipulate the text file and check our security. Long Term pickle prob should be used
-        # So instead of lines 62-84 above, we just use:
-        # blockchain = file_content['chain']
-        # open_transactions = file_content['ot']
+            # Pickling removes the need for the previous ~ 25 lines because being a binary serialization, it keeps the OrderedDict 'metadata' and we don't
+            # have to perform the complex transformation we did with the json/text serialization. However we will switch to the longer
+            # json serialization in order to manipulate the text file and check our security. Long Term pickle prob should be used
+            # So instead of lines 62-84 above, we just use:
+            # blockchain = file_content['chain']
+            # open_transactions = file_content['ot']
+    # NOTE: Important to handle each exception explicitly, as we do the IOError (after the except keyword) below
+    # NOTE: In the exception clause below we initially tried without specifiying an exception type.. this worked, but is an anti-pattern and will obfuscate errors..
+    # NOTE: Instead always follow except with the exception type to be handled.. you can string together multiple except clauses. Or alternatively can include more than 1 in parenthesis
+    # NOTE: While you can use a 'catch-all' except statement with NO specified exception.. this must be used with care because it will hide important information about errors/bugs
+    except IOError:
+        print('No blockchain save file found. Creating from genesis...')
+    except ValueError:
+        print('Incorrect file data structure attempted to be loaded...')
+    except:
+        # NOTE: VALID BUT DANGEROUS
+        print('Error in loading blockchain data... continuing...')
+    finally:
+        # Just like in javascript the finally block works exactly the same, will always be executed regardless of a successful try or an exception
+        print('Cleanup..')
 
 
 # Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
