@@ -43,16 +43,56 @@ class InstanceCar:
         self.warnings = []
         # Also note we do not accept any arguments for this list at object construction/creation
 
+    def __repr__(self) -> str:
+        # __repr__ is another special 'dunder' method on python objects that is called on when a 'representation' of the object is called for.. like when printing..
+        # __repr__ expects a string value to be returned. The method is used on your classes when you want to overwrite the default representation python uses which
+        # will error if you try print(repr(my_object)) by default.. You must overwrite it with whatever you want like we do in return statement below.
+        print('PRINTING...')
+        return f'Top Speed: {self.top_speed}  -  Warnings: {self.warnings}'
+
+
+print('-'*60)
+print('\n'*2)
 
 # Create instance object passing speed in constructor
 new_car1 = InstanceCar(120)
 # Create a new instance object with no speed passed in constructor
 new_car2 = InstanceCar()
 
-print('new_car1 (instance car) speed: ', new_car1.top_speed)
+print('new_car1 (instance car) speed: ', new_car1.top_speed)            # 120
 
 # Attempt exact same operation as before except this time it won't modify/act on the class attibute and won't affect every single object created from the class
 new_car1.top_speed = 115.11111
 
+# 100 (default value)
 print('new_car2 top speed: ', new_car2.top_speed)
-print('new_car1 top speed after direct modify: ', new_car1.top_speed)
+print('new_car1 top speed after direct modify: ',
+      new_car1.top_speed)   # 115.11111
+
+new_car3 = InstanceCar()
+new_car3.warnings.append('CAR 3 WARNING!!')
+
+# [] (empty list).
+print('new_car1 warnings list : ', new_car1.warnings)
+# ['CAR 3 WARNING!!']
+print('new_car3 warnings list : ', new_car3.warnings)
+
+print('-'*60)
+print('\n'*2)
+
+# One of the very convenient things javascript does is allows you to log-out/print an object so that you can see it's structure..
+# If you try to print(new_car3) in python, it will return the memory address.. not very useful ..
+# However there does exist on standard objects the __dict__ property (it's not a method). This will output a dictionary representation of the object.
+
+# print('new_car3  :  ', new_car3)
+print('new_car3.__dict__  :  ', new_car3.__dict__)
+
+print('-'*60)
+print('\n'*2)
+
+# print(repr(new_car1))
+
+car_list = [new_car1, new_car2, new_car3]
+
+for count, car in enumerate(car_list):
+    print(f'loop #{count} : ', repr(car))
