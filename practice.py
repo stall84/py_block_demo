@@ -133,3 +133,12 @@ print(isAnagram('racecar', 'racecar'))
 print(isAnagram('racecar', 'racedar'))
 print(isAnagram('a heart', 'a earth'))
 print(isAnagram('rat', 'car'))
+
+
+def binary_sum(str1: str, str2: str) -> str:
+    print(f'working with.. {str1} + {str2}')
+    answer = int(str1) + int(str2)
+    return answer
+
+
+print(binary_sum('11', '2'))
