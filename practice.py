@@ -2,7 +2,7 @@ import hashlib
 import json
 import string
 
-names = ['David', 'Paul', 'Adrienne', 'Becca', 'Alexander']
+names = ['David', 'Paul', 'Anna', 'Bertha', 'Alexander']
 
 # print('names start length: ', len(names))
 # for name in names:

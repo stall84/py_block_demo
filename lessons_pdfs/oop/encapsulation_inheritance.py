@@ -20,7 +20,7 @@ class Car:
     def get_warnings(self):
         print('warnings: ', self.__warnings)
 
-    def car_print(self):
+    def vehicle_print(self):
         print(repr(self))
 
 
@@ -32,5 +32,9 @@ car2 = Car(189)
 car_list = [car1, car2]
 
 for car in car_list:
-    car.car_print()
+    car.vehicle_print()
     car.get_warnings()
+
+
+# INHERITANCE
+# In order to keep code DRY .. We can extend from a base class, just like in any other OOP language.
