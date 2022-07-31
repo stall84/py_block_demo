@@ -7,7 +7,7 @@ import pickle       # pickle package / 'pickling' can convert python data to bin
 
 # Custom Imports
 from hash_util import hash_string_256, hash_block
-
+from block import Block
 
 # Global constants and variables
 MINING_REWARD = 10
@@ -67,15 +67,21 @@ def load_data():
             updated_blockchain = []
             # # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
             for block in blockchain:
-                updated_block = {
-                    'previous_hash': block['previous_hash'],
-                    'index': block['index'],
-                    'proof': block['proof'],
-                    'transactions': [OrderedDict(
-                        [('sender', tx['sender']), ('recipient',
-                                                    tx['recipient']), ('amount', tx['amount'])]
-                    ) for tx in block['transactions']]
-                }
+                converted_trans = [OrderedDict(
+                    [('sender', tx['sender']), ('recipient',
+                                                tx['recipient']), ('amount', tx['amount'])]
+                ) for tx in block['transactions']]
+                updated_block = Block(
+                    block['index'], block['previous_hash'], converted_trans, block['proof'], block['timestamp'])
+                # updated_block = {
+                #     'previous_hash': block['previous_hash'],
+                #     'index': block['index'],
+                #     'proof': block['proof'],
+                #     'transactions': [OrderedDict(
+                #         [('sender', tx['sender']), ('recipient',
+                #                                     tx['recipient']), ('amount', tx['amount'])]
+                #     ) for tx in block['transactions']]
+                # }
                 updated_blockchain.append(updated_block)
             blockchain = updated_blockchain
             # # No newline at end of open_transactions so no range need selected
@@ -99,10 +105,11 @@ def load_data():
     #       While you can use a 'catch-all' except statement with NO specified exception.. this must be used with care because it will hide important information about errors/bugs
     except IOError:
         print('No blockchain save file found. Creating from genesis...')
-        GENESIS_BLOCK = {'previous_hash': '',
-                         'index': 0,
-                         'transactions': [],
-                         'proof': 100}
+        GENESIS_BLOCK = Block(0, '', [], 100, 0)
+        # GENESIS_BLOCK = {'previous_hash': '',
+        #                  'index': 0,
+        #                  'transactions': [],
+        #                  'proof': 100}
         # List structure for our main blockchain datatype
         blockchain = [GENESIS_BLOCK]
         open_transactions = []
@@ -212,7 +219,7 @@ def proof_of_work():
 def get_balance(participant):
     # We're going to use a nested list comprehension here.. I'm not a huge fan of these so far.. but the idea is
     # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
-    tx_sender = [[tx['amount'] for tx in block['transactions']
+    tx_sender = [[tx['amount'] for tx in block.transactions
                   if tx['sender'] == participant] for block in blockchain]
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
@@ -227,7 +234,7 @@ def get_balance(participant):
     #     if len(tx) > 0:
     #         # Remember tx_sender is a list of lists.. so access the 0th element for the value itself
     #         amount_sent += tx[0]
-    tx_recipient = [[tx['amount'] for tx in block['transactions']
+    tx_recipient = [[tx['amount'] for tx in block.transactions
                      if tx['recipient'] == participant] for block in blockchain]
     amount_received = functools.reduce(
         lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0, tx_recipient, 0)
@@ -263,12 +270,14 @@ def mine_block():
         # To do so, use the [:] list operation to 'spread in' all of the elements (copy them)
         copied_transactions = open_transactions[:]
         copied_transactions.append(reward_transaction)
-        block = {
-            'previous_hash': hashed_block,
-            'index': len(blockchain),
-            'transactions': copied_transactions,
-            'proof': proof,
-        }
+        block = Block(len(blockchain), hashed_block,
+                      copied_transactions, proof, )
+        # block = {
+        #     'previous_hash': hashed_block,
+        #     'index': len(blockchain),
+        #     'transactions': copied_transactions,
+        #     'proof': proof,
+        # }
         blockchain.append(block)
 
         # We still need to add validation in this method
@@ -296,10 +305,10 @@ def verify_chain():
     for (index, block) in enumerate(blockchain):
         if index == 0:
             continue
-        if block['previous_hash'] != hash_block(blockchain[index - 1]):
+        if block.previous_hash != hash_block(blockchain[index - 1]):
             return False
         # Check the proof as well
-        if not valid_proof(block['transactions'][:-1], block['previous_hash'], block['proof']):
+        if not valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
             print('Proof of Work is Invalid ...')
             return False
     return True
@@ -325,7 +334,6 @@ while waiting_for_input:
     print('1: Add a new transaction amount ')
     print('2: Mine a new block')
     print('3: Output the blockchain blocks')
-    print('h: Manipulate the chain')
     print('o: Print the current open transactions (not mined)')
     print('p: Print all participants')
     print('v: Check validity of all transactions')
@@ -348,14 +356,7 @@ while waiting_for_input:
 
     elif user_choice == '3':
         print_blockchain_data()
-    elif user_choice == 'h':
-        # Make sure that you don't try to "hack" the blockchain if it's empty
-        if len(blockchain) >= 1:
-            blockchain[0] = {
-                'previous_hash': '',
-                'index': 0,
-                'transactions': [{'sender': 'Chris', 'recipient': 'Max', 'amount': 100.0}]
-            }
+
     elif user_choice == 'o':
         print_open_transactions()
     elif user_choice == 'p':
