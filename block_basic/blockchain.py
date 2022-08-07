@@ -400,7 +400,6 @@ while waiting_for_input:
     print("2: Mine a new block")
     print("3: Output the blockchain blocks")
     print("o: Print the current open transactions (not mined)")
-    print("p: Print all participants")
     print("v: Check validity of all transactions")
     print("q: Quit")
     user_choice = get_user_choice()
@@ -423,13 +422,8 @@ while waiting_for_input:
 
     elif user_choice == "3":
         print_blockchain_data()
-
     elif user_choice == "o":
         print_open_transactions()
-    elif user_choice == "p":
-        print("Participants: ")
-        for participant in participants:
-            print(participant)
     elif user_choice == "v":
         if verify_transactions():
             print("All transactions are valid")
