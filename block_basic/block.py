@@ -2,9 +2,12 @@ from time import time
 
 
 class Block:
-    def __init__(self, index, previous_hash, transactions, proof, time=time()) -> None:
+    def __init__(self, index, previous_hash, transactions, proof, timestamp=None) -> None:
         self.index = index
         self.previous_hash = previous_hash
-        self.timestamp = time
+        self.timestamp = time() if timestamp is None else timestamp
         self.transactions = transactions
         self.proof = proof
+
+    def __repr__(self) -> str:
+        return f'Index: {self.index}, Previous Hash: {self.previous_hash}, Proof: {self.proof}, Transactions: {self.transactions}, Timestamp: {self.timestamp}'
