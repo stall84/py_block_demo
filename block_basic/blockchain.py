@@ -9,6 +9,7 @@ import pickle  # pickle package / 'pickling' can convert python data to binary, 
 from hash_util import hash_string_256, hash_block
 from block import Block
 from transaction import Transaction
+from verification import Verification
 
 # Global constants and variables
 MINING_REWARD = 10
@@ -199,7 +200,8 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     # transaction = OrderedDict(
     #     [("sender", sender), ("recipient", recipient), ("amount", amount)]
     # )
-    if verify_transaction(transaction):
+    verifier = Verification()
+    if verifier.verify_transaction(transaction, get_balance):
         open_transactions.append(transaction)
         # participants.add(sender)
         # participants.add(recipient)
@@ -209,13 +211,14 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     return False
 
 
-def verify_transaction(transaction):
-    sender_balance = get_balance(transaction.sender)
-    return sender_balance >= transaction.amount
+# def verify_transaction(transaction):
+#     sender_balance = get_balance(transaction.sender)
+#     return sender_balance >= transaction.amount
 
 
-def verify_transactions():
-    return all([verify_transaction(tx) for tx in open_transactions])
+# def verify_transactions():
+#     # Verify all open transactions
+#     return all([verify_transaction(tx) for tx in open_transactions])
 
 
 """
@@ -223,17 +226,17 @@ def verify_transactions():
 """
 
 
-def valid_proof(transactions, last_hash, proof):
-    # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
-    # guess = (str(transactions) + str(last_hash) + str(proof)).encode()
-    guess = (str([tx.to_ordered_dict() for tx in transactions]) +
-             str(last_hash) + str(proof)).encode()
-    print("DEBUG - guess: ", guess)
-    guess_hash = hash_string_256(guess)
-    print("guess_hash: ", guess_hash)
-    # The leading 2 0's below is merely an arbitrary condition picked to validate the hash..
-    # Essentially this is determining if the input proof does indeed lead to this hash
-    return guess_hash[0:2] == "00"  # Return True when this condition is met
+# def valid_proof(transactions, last_hash, proof):
+#     # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
+#     # guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+#     guess = (str([tx.to_ordered_dict() for tx in transactions]) +
+#              str(last_hash) + str(proof)).encode()
+#     print("DEBUG - guess: ", guess)
+#     guess_hash = hash_string_256(guess)
+#     print("guess_hash: ", guess_hash)
+#     # The leading 2 0's below is merely an arbitrary condition picked to validate the hash..
+#     # Essentially this is determining if the input proof does indeed lead to this hash
+#     return guess_hash[0:2] == "00"  # Return True when this condition is met
 
 
 def proof_of_work():
@@ -242,7 +245,8 @@ def proof_of_work():
     proof = 0
     # Continue working (looping) until valid_proof returns True, at which point our Proof has
     # correctly 'solved' the proof of work 'puzzle'
-    while not valid_proof(open_transactions, last_hash, proof):
+    verifier = Verification()
+    while not verifier.valid_proof(open_transactions, last_hash, proof):
         proof += 1
     return proof
 
@@ -365,31 +369,18 @@ def get_transaction_value():
 # In Python you have to make use of the range function to set increment/decrement, etc.
 
 
-def verify_chain():
-    # Using enumerate function to return a tuple where 1st element is index of element, and 2nd is the value
-    for (index, block) in enumerate(blockchain):
-        if index == 0:
-            continue
-        if block.previous_hash != hash_block(blockchain[index - 1]):
-            return False
-        # Check the proof as well
-        if not valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
-            print("Proof of Work is Invalid ...")
-            return False
-    return True
-    # # block_index = 0
-    # is_valid = True
-    # for block_index in range(len(blockchain)):
-    #     if block_index == 0:
-
-    #         continue
-    #     elif blockchain[block_index][0] == blockchain[block_index - 1]:
-    #         is_valid = True
-    #     else:
-    #         is_valid = False
-    #         break
-    # return is_valid
-    # # return False
+# def verify_chain():
+#     # Using enumerate function to return a tuple where 1st element is index of element, and 2nd is the value
+#     for (index, block) in enumerate(blockchain):
+#         if index == 0:
+#             continue
+#         if block.previous_hash != hash_block(blockchain[index - 1]):
+#             return False
+#         # Check the proof as well
+#         if not valid_proof(block.transactions[:-1], block.previous_hash, block.proof):
+#             print("Proof of Work is Invalid ...")
+#             return False
+#     return True
 
 
 waiting_for_input = True
@@ -425,7 +416,8 @@ while waiting_for_input:
     elif user_choice == "o":
         print_open_transactions()
     elif user_choice == "v":
-        if verify_transactions():
+        verifier = Verification()
+        if verifier.verify_transactions(open_transactions, get_balance):
             print("All transactions are valid")
         else:
             print("There are invalid transactions")
@@ -435,7 +427,8 @@ while waiting_for_input:
         print("Input was invalid, please pick a value from the list!")
     # Review string formatting {}:6.2f} is calling for max 6 digits with 2 decimal places - Print balances after any transaction
     print("Balance of {}: {:6.2f}".format("Michael", get_balance("Michael")))
-    if not verify_chain():
+    verifier = Verification()
+    if not verifier.verify_chain(blockchain):
         print_blockchain_data()  # print the apparently corrupted blockchain to user
         print("Invalid Blockchain!")
         break  # Immediately exit
