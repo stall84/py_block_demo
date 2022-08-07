@@ -8,6 +8,7 @@ import pickle  # pickle package / 'pickling' can convert python data to binary, 
 # Custom Imports
 from hash_util import hash_string_256, hash_block
 from block import Block
+from transaction import Transaction
 
 # Global constants and variables
 MINING_REWARD = 10
@@ -34,11 +35,12 @@ def save_data():
             # So we will use the JSON library for that
             # After switching to class-object form of block.. we need to make the blockchain serializable for the json function again
             saveable_chain = [
-                block.__dict__ for block in blockchain
+                block.__dict__ for block in [Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof, block_el.timestamp) for block_el in blockchain]
             ]  # After moving to class-objcet Block.. This list comprehension will create a json-able list of block dicts
             curr_file.write(json.dumps(saveable_chain))
             curr_file.write("\n")
-            curr_file.write(json.dumps(open_transactions))
+            saveable_trans = [tx.__dict__ for tx in open_transactions]
+            curr_file.write(json.dumps(saveable_trans))
 
             # Alternate pickle implementation
             # When pickling binary we can't use a newline text character.. therefore create a new dict object to be stored as binary in pickling
@@ -73,16 +75,18 @@ def load_data():
             updated_blockchain = []
             # # Currently very confused over what we're doing here, but understand it's to deserialize the json loaded data into the OrderedDict format we're using when saving.
             for block in blockchain:
-                converted_trans = [
-                    OrderedDict(
-                        [
-                            ("sender", tx["sender"]),
-                            ("recipient", tx["recipient"]),
-                            ("amount", tx["amount"]),
-                        ]
-                    )
-                    for tx in block["transactions"]
-                ]
+                converted_trans = [Transaction(
+                    tx['sender'], tx['recipient'], tx['amount']) for tx in block['transactions']]
+                # converted_trans = [
+                #     OrderedDict(
+                #         [
+                #             ("sender", tx["sender"]),
+                #             ("recipient", tx["recipient"]),
+                #             ("amount", tx["amount"]),
+                #         ]
+                #     )
+                #     for tx in block["transactions"]
+                # ]
                 updated_block = Block(
                     block["index"],
                     block["previous_hash"],
@@ -105,13 +109,15 @@ def load_data():
             open_transactions = json.loads(file_content[1])
             updated_transactions = []
             for tx in open_transactions:
-                updated_transaction = OrderedDict(
-                    [
-                        ("sender", tx["sender"]),
-                        ("recipient", tx["recipient"]),
-                        ("amount", tx["amount"]),
-                    ]
-                )
+                updated_transaction = Transaction(
+                    tx['sender'], tx['recipient'], tx['amount'])
+                # updated_transaction = OrderedDict(
+                #     [
+                #         ("sender", tx["sender"]),
+                #         ("recipient", tx["recipient"]),
+                #         ("amount", tx["amount"]),
+                #     ]
+                # )
                 updated_transactions.append(updated_transaction)
             open_transactions = updated_transactions
 
@@ -189,14 +195,14 @@ def add_transaction(recipient, sender=owner, amount=1.0):
             :amount: The amount of coins sent with transaction, (optional default = 1)
     """
     # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
-    # transaction = {'sender': sender, 'recipient': recipient, 'amount': amount}
-    transaction = OrderedDict(
-        [("sender", sender), ("recipient", recipient), ("amount", amount)]
-    )
+    transaction = Transaction(sender, recipient, amount)
+    # transaction = OrderedDict(
+    #     [("sender", sender), ("recipient", recipient), ("amount", amount)]
+    # )
     if verify_transaction(transaction):
         open_transactions.append(transaction)
-        participants.add(sender)
-        participants.add(recipient)
+        # participants.add(sender)
+        # participants.add(recipient)
         save_data()
         # Lets return a boolean (something) so that we can handle/communicate errors
         return True
@@ -204,8 +210,8 @@ def add_transaction(recipient, sender=owner, amount=1.0):
 
 
 def verify_transaction(transaction):
-    sender_balance = get_balance(transaction["sender"])
-    return sender_balance >= transaction["amount"]
+    sender_balance = get_balance(transaction.sender)
+    return sender_balance >= transaction.amount
 
 
 def verify_transactions():
@@ -219,7 +225,9 @@ def verify_transactions():
 
 def valid_proof(transactions, last_hash, proof):
     # We'll initially guess by taking our block and adding to it this separate 'proof'.. Create a string and hash it
-    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    # guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess = (str([tx.to_ordered_dict() for tx in transactions]) +
+             str(last_hash) + str(proof)).encode()
     print("DEBUG - guess: ", guess)
     guess_hash = hash_string_256(guess)
     print("guess_hash: ", guess_hash)
@@ -242,19 +250,28 @@ def proof_of_work():
 def get_balance(participant):
     # We're going to use a nested list comprehension here.. I'm not a huge fan of these so far.. but the idea is
     # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
+    # Changes below represent our move from a Dictionary 'literal' to our custom Transaction object (access pros via dot notation)
+    # tx_sender = [
+    #     [tx["amount"] for tx in block.transactions if tx["sender"] == participant]
+    #     for block in blockchain
+    # ]
     tx_sender = [
-        [tx["amount"] for tx in block.transactions if tx["sender"] == participant]
+        [tx.amount for tx in block.transactions if tx.sender == participant]
         for block in blockchain
     ]
+    # open_tx_sender = [
+    #     tx["amount"] for tx in open_transactions if tx["sender"] == participant
+    # ]
     open_tx_sender = [
-        tx["amount"] for tx in open_transactions if tx["sender"] == participant
+        tx.amount for tx in open_transactions if tx.sender == participant
     ]
     tx_sender.append(open_tx_sender)  # More balance verification
     # Remember tx_sender is a list of lists.. so access the 0th element for the value itself in amount_sent calc below
     # We use a ternary expression in the reduce lambda below. Slightly different arrangement than in JS
     # where: (Value If True) if (Condition to test) else (Value If False)
     amount_sent = functools.reduce(
-        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0,
+        lambda tx_sum, tx_amt: tx_sum +
+        sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0,
         tx_sender,
         0,
     )
@@ -263,12 +280,19 @@ def get_balance(participant):
     #     if len(tx) > 0:
     #         # Remember tx_sender is a list of lists.. so access the 0th element for the value itself
     #         amount_sent += tx[0]
+    # tx_recipient = [
+    #     [tx["amount"]
+    #         for tx in block.transactions if tx["recipient"] == participant]
+    #     for block in blockchain
+    # ]
     tx_recipient = [
-        [tx["amount"] for tx in block.transactions if tx["recipient"] == participant]
+        [tx.amount
+            for tx in block.transactions if tx.recipient == participant]
         for block in blockchain
     ]
     amount_received = functools.reduce(
-        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0,
+        lambda tx_sum, tx_amt: tx_sum +
+        sum(tx_amt) if len(tx_amt) > 0 else tx_sum + 0,
         tx_recipient,
         0,
     )
@@ -297,9 +321,10 @@ def mine_block():
         #     'amount': MINING_REWARD
         # }
         # Using the OrderedDict imported object to preclude any key-value order-mismatch
-        reward_transaction = OrderedDict(
-            [("sender", "MINING"), ("recipient", owner), ("amount", MINING_REWARD)]
-        )
+        # reward_transaction = OrderedDict(
+        #     [("sender", "MINING"), ("recipient", owner), ("amount", MINING_REWARD)]
+        # )
+        reward_transaction = Transaction('MINING', owner, MINING_REWARD)
         # Apend the miner's payout before combining and applying them to blockchain
         # We want to use a copy of open_transactions to limit errors at scale..
         # To do so, use the [:] list operation to 'spread in' all of the elements (copy them)
