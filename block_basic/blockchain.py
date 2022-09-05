@@ -24,15 +24,20 @@ class Blockchain:
         # List structure for our main blockchain datatype
         # Initialized to an empty list and named 'chain' to differentiate
         # from the Blockchain class/object
-        self.__chain = [GENESIS_BLOCK]
+        self.chain = [GENESIS_BLOCK]
         self.__open_transactions = []
         # Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
         self.load_data()
 
-    def get_chain(self):
+    @property
+    def chain(self):
         # Return a copy of the chain. This adds a layer of protection against outside modification since this is a reference object.
         return self.__chain[:]
         # (If we had just returned self.__chain.. that would have given access to the object itself)
+
+    @chain.setter
+    def chain(self, val):
+        self.__chain = val
 
     def get_open_transactions(self):
         # Return a copy of the chain. This adds a layer of protection against outside modification since this is a reference object.
@@ -68,7 +73,7 @@ class Blockchain:
                     )
 
                     updated_blockchain.append(updated_block)
-                self.__chain = updated_blockchain
+                self.chain = updated_blockchain
                 # # No newline at end of open_transactions so no range need selected
                 open_transactions = json.loads(file_content[1])
                 updated_transactions = []

@@ -28,7 +28,7 @@ class Node:
 
     def print_blockchain_data(self):
         # Output all blocks of the blockchain to the console
-        for block in self.blockchain.get_chain():
+        for block in self.blockchain.chain:
             print("Block : ", block)
         else:
             print("_" * 20)
@@ -79,7 +79,7 @@ class Node:
             # Review string formatting {}:6.2f} is calling for max 6 digits with 2 decimal places - Print balances after any transaction
             print("Balance of {}: {:6.2f}".format(
                 self.id, self.blockchain.get_balance()))
-            if not Verification.verify_chain(self.blockchain.get_chain()):
+            if not Verification.verify_chain(self.blockchain.chain):
                 self.print_blockchain_data()  # print the apparently corrupted blockchain to user
                 print("Invalid Blockchain!")
                 break  # Immediately exit
