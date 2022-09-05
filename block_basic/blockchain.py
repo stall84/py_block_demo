@@ -24,10 +24,20 @@ class Blockchain:
         # List structure for our main blockchain datatype
         # Initialized to an empty list and named 'chain' to differentiate
         # from the Blockchain class/object
-        self.chain = [GENESIS_BLOCK]
-        self.open_transactions = []
+        self.__chain = [GENESIS_BLOCK]
+        self.__open_transactions = []
         # Immediately Call to load-in most recent saved copy of the blockchain/open_transactions
         self.load_data()
+
+    def get_chain(self):
+        # Return a copy of the chain. This adds a layer of protection against outside modification since this is a reference object.
+        return self.__chain[:]
+        # (If we had just returned self.__chain.. that would have given access to the object itself)
+
+    def get_open_transactions(self):
+        # Return a copy of the chain. This adds a layer of protection against outside modification since this is a reference object.
+        return self.__open_transactions[:]
+        # (If we had just returned self.__open_transactions.. that would have given access to the object itself)
 
     def load_data(self):
         # We want to guard (error-handle) against the possibility the blockchain.txt/p file may not exist. Use a try/catch block
@@ -58,7 +68,7 @@ class Blockchain:
                     )
 
                     updated_blockchain.append(updated_block)
-                self.chain = updated_blockchain
+                self.__chain = updated_blockchain
                 # # No newline at end of open_transactions so no range need selected
                 open_transactions = json.loads(file_content[1])
                 updated_transactions = []
@@ -66,7 +76,7 @@ class Blockchain:
                     updated_transaction = Transaction(
                         tx['sender'], tx['recipient'], tx['amount'])
                     updated_transactions.append(updated_transaction)
-                self.open_transactions = updated_transactions
+                self.__open_transactions = updated_transactions
 
                 # Pickling removes the need for the previous ~ 25 lines because being a binary serialization, it keeps the OrderedDict 'metadata' and we don't
                 # have to perform the complex transformation we did with the json/text serialization. However we will switch to the longer
@@ -95,24 +105,24 @@ class Blockchain:
                 # So we will use the JSON library for that
                 # After switching to class-object form of block.. we need to make the blockchain serializable for the json function again
                 saveable_chain = [
-                    block.__dict__ for block in [Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof, block_el.timestamp) for block_el in self.chain]
+                    block.__dict__ for block in [Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof, block_el.timestamp) for block_el in self.__chain]
                 ]  # After moving to class-objcet Block.. This list comprehension will create a json-able list of block dicts
                 curr_file.write(json.dumps(saveable_chain))
                 curr_file.write("\n")
-                saveable_trans = [tx.__dict__ for tx in self.open_transactions]
+                saveable_trans = [
+                    tx.__dict__ for tx in self.__open_transactions]
                 curr_file.write(json.dumps(saveable_trans))
 
         except IOError:
             print("Error saving blockchain file...")
 
     def proof_of_work(self):
-        last_block = self.chain[-1]
+        last_block = self.__chain[-1]
         last_hash = hash_block(last_block)
         proof = 0
         # Continue working (looping) until valid_proof returns True, at which point our Proof has
         # correctly 'solved' the proof of work 'puzzle'
-        verifier = Verification()
-        while not verifier.valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.valid_proof(self.__open_transactions, last_hash, proof):
             proof += 1
         return proof
 
@@ -123,10 +133,10 @@ class Blockchain:
         # Changes below represent our move from a Dictionary 'literal' to our custom Transaction object (access pros via dot notation)
         tx_sender = [
             [tx.amount for tx in block.transactions if tx.sender == participant]
-            for block in self.chain
+            for block in self.__chain
         ]
         open_tx_sender = [
-            tx.amount for tx in self.open_transactions if tx.sender == participant
+            tx.amount for tx in self.__open_transactions if tx.sender == participant
         ]
         tx_sender.append(open_tx_sender)  # More balance verification
         # Remember tx_sender is a list of lists.. so access the 0th element for the value itself in amount_sent calc below
@@ -141,7 +151,7 @@ class Blockchain:
         tx_recipient = [
             [tx.amount
                 for tx in block.transactions if tx.recipient == participant]
-            for block in self.chain
+            for block in self.__chain
         ]
         amount_received = functools.reduce(
             lambda tx_sum, tx_amt: tx_sum +
@@ -152,10 +162,10 @@ class Blockchain:
         return amount_received - amount_sent
 
     def get_last_blockchain_value(self):
-        if len(self.chain) < 1:
+        if len(self.__chain) < 1:
             return None
         # Using negative index to return the last-in element
-        return self.chain[-1]
+        return self.__chain[-1]
 
     def add_transaction(self, recipient, sender, amount=1.0):
         """
@@ -168,9 +178,8 @@ class Blockchain:
         # Form a dictionary-literal from our inputs. Append this new dict to the transactions list
         transaction = Transaction(sender, recipient, amount)
 
-        verifier = Verification()
-        if verifier.verify_transaction(transaction, self.get_balance):
-            self.open_transactions.append(transaction)
+        if Verification.verify_transaction(transaction, self.get_balance):
+            self.__open_transactions.append(transaction)
             # participants.add(sender)
             # participants.add(recipient)
             self.save_data()
@@ -181,7 +190,7 @@ class Blockchain:
     def mine_block(self):
         try:
             # You can use negative element notation to access elements from end (right side)
-            last_block = self.chain[-1]
+            last_block = self.__chain[-1]
             # List Comprehension .. Kind of like spreading and templating/formatting in a the the same time
             hashed_block = hash_block(last_block)
             # Call our proof-of-work function for mining process
@@ -194,17 +203,17 @@ class Blockchain:
             # Apend the miner's payout before combining and applying them to blockchain
             # We want to use a copy of open_transactions to limit errors at scale..
             # To do so, use the [:] list operation to 'spread in' all of the elements (copy them)
-            copied_transactions = self.open_transactions[:]
+            copied_transactions = self.__open_transactions[:]
             copied_transactions.append(reward_transaction)
             block = Block(
-                len(self.chain),
+                len(self.__chain),
                 hashed_block,
                 copied_transactions,
                 proof,
             )
-            self.chain.append(block)
+            self.__chain.append(block)
             # Clear/Reset the open transactions after mining the block
-            self.open_transactions = (
+            self.__open_transactions = (
                 []
             )
             self.save_data()

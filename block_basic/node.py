@@ -28,7 +28,7 @@ class Node:
 
     def print_blockchain_data(self):
         # Output all blocks of the blockchain to the console
-        for block in self.blockchain.chain:
+        for block in self.blockchain.get_chain():
             print("Block : ", block)
         else:
             print("_" * 20)
@@ -59,16 +59,16 @@ class Node:
                     print("Added Transaction!")
                 else:
                     print("Transaction Failed..")
-                print(self.blockchain.open_transactions)
+                print(self.blockchain.get_open_transactions())
             elif user_choice == "2":
                 self.blockchain.mine_block()
             elif user_choice == "3":
                 self.print_blockchain_data()
             elif user_choice == "o":
-                self.print_open_transactions(self.blockchain.open_transactions)
+                self.print_open_transactions(
+                    self.blockchain.get_open_transactions())
             elif user_choice == "v":
-                verifier = Verification()
-                if verifier.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_balance):
+                if Verification.verify_transactions(self.blockchain.get_open_transactions(), self.blockchain.get_balance):
                     print("All transactions are valid")
                 else:
                     print("There are invalid transactions")
@@ -79,8 +79,7 @@ class Node:
             # Review string formatting {}:6.2f} is calling for max 6 digits with 2 decimal places - Print balances after any transaction
             print("Balance of {}: {:6.2f}".format(
                 self.id, self.blockchain.get_balance()))
-            verifier = Verification()
-            if not verifier.verify_chain(self.blockchain.chain):
+            if not Verification.verify_chain(self.blockchain.get_chain()):
                 self.print_blockchain_data()  # print the apparently corrupted blockchain to user
                 print("Invalid Blockchain!")
                 break  # Immediately exit
