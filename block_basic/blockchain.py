@@ -116,7 +116,8 @@ class Blockchain:
             proof += 1
         return proof
 
-    def get_balance(self, participant):
+    def get_balance(self):
+        participant = self.hosting_node
         # We're going to use a nested list comprehension here.. I'm not a huge fan of these so far.. but the idea is
         # we want to pull out each transaction's amount made by a particular participant iterating through each block in the blockchain
         # Changes below represent our move from a Dictionary 'literal' to our custom Transaction object (access pros via dot notation)
@@ -202,6 +203,11 @@ class Blockchain:
                 proof,
             )
             self.chain.append(block)
+            # Clear/Reset the open transactions after mining the block
+            self.open_transactions = (
+                []
+            )
+            self.save_data()
             return True
         except:
             print("ERROR MINING BLOCK - ABORTED")

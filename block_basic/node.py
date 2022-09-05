@@ -1,12 +1,14 @@
 from uuid import uuid4
 from blockchain import Blockchain
+from verification import Verification
 
 
 class Node:
-    # We make the decision that our Node objects should contain local copies of the blockchain.
+    # We made the decision that our Node objects should contain local copies of the blockchain.
     # Eventually this class will be used to create a Node object for every user/participant connecting over the internet
     def __init__(self) -> None:
-        self.id = uuid4()
+        # self.id = str(uuid4())
+        self.id = 'TEMPORARY WALLET KEY'
         self.blockchain = Blockchain(self.id)
 
     def get_transaction_value(self):
@@ -57,21 +59,16 @@ class Node:
                     print("Added Transaction!")
                 else:
                     print("Transaction Failed..")
-                print(open_transactions)
+                print(self.blockchain.open_transactions)
             elif user_choice == "2":
-                if mine_block():
-                    open_transactions = (
-                        []
-                    )  # If minining successfull - clear the open transactions list
-                    save_data()
-
+                self.blockchain.mine_block()
             elif user_choice == "3":
                 self.print_blockchain_data()
             elif user_choice == "o":
-                print_open_transactions()
+                self.print_open_transactions(self.blockchain.open_transactions)
             elif user_choice == "v":
                 verifier = Verification()
-                if verifier.verify_transactions(open_transactions, get_balance):
+                if verifier.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_balance):
                     print("All transactions are valid")
                 else:
                     print("There are invalid transactions")
@@ -81,11 +78,15 @@ class Node:
                 print("Input was invalid, please pick a value from the list!")
             # Review string formatting {}:6.2f} is calling for max 6 digits with 2 decimal places - Print balances after any transaction
             print("Balance of {}: {:6.2f}".format(
-                "Michael", get_balance("Michael")))
+                self.id, self.blockchain.get_balance()))
             verifier = Verification()
-            if not verifier.verify_chain(blockchain):
+            if not verifier.verify_chain(self.blockchain.chain):
                 self.print_blockchain_data()  # print the apparently corrupted blockchain to user
                 print("Invalid Blockchain!")
                 break  # Immediately exit
 
         print("Done!")
+
+
+node = Node()
+node.listen_for_input()
